@@ -14,7 +14,7 @@
   <script src="app.js" defer></script>
   <script src="vendor/alpine.min.js" defer></script>
 </head>
-<body @visibilitychange.document="pageHidden = document.hidden" x-data="clubApp()" :class="{ 'invitation-open': opened, 'is-editing': focused, 'is-unlocking': busy, 'motion-paused': pageHidden }">
+<body @visibilitychange.document="pageHidden = document.hidden" x-data="clubApp()" :class="{ 'invitation-open': opened || eggOpened, 'is-editing': focused, 'is-unlocking': busy, 'motion-paused': pageHidden }">
   <svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
     <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 19 19 5M5 5h14v14"/></symbol>
     <symbol id="download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
@@ -89,6 +89,19 @@
       <p class="save-error" x-show="saveError" x-text="saveError" role="alert" x-cloak></p>
       <button class="back-button" @click="closeInvitation">返回姓名查询 <span aria-hidden="true">↗</span></button>
     </section>
+  </dialog>
+  <dialog class="egg-dialog" x-ref="egg" :data-stage="eggStage" aria-label="隐藏彩蛋" @cancel.prevent="closeEgg" @close="eggClosed">
+    <div class="egg-screen" x-ref="eggScreen" x-show="eggStage !== 'off'">
+      <div class="egg-grid" aria-hidden="true"></div>
+      <div class="egg-brand"><span aria-hidden="true">&gt;_</span> IT 实训协会</div>
+      <div class="egg-copy" aria-live="polite" aria-atomic="true">
+        <h2 class="egg-invite" x-show="eggStage === 'invite'"><span>同学，</span><span>快来加入</span><span>IT实训协会</span></h2>
+        <h2 class="egg-aside" x-show="eggStage === 'aside' || eggStage === 'shutdown'"><span>这个</span><span>能正常使用的</span><svg class="egg-check" viewBox="0 0 64 64" aria-hidden="true"><path d="m15 32 11 11 23-24"/></svg></h2>
+      </div>
+      <div class="egg-track" aria-hidden="true"><i></i><i></i></div>
+    </div>
+    <button class="egg-skip" x-ref="eggSkip" x-show="eggStage !== 'off' && eggStage !== 'shutdown'" @click="closeEgg">跳过 <svg class="icon" aria-hidden="true"><use href="#close"/></svg></button>
+    <button class="egg-restart" x-ref="eggRestart" x-show="eggStage === 'off'" @click="closeEgg"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 5v14M11 10a14 14 0 1 0 18 0"/></svg><span>重新开机</span></button>
   </dialog>
   <noscript><div class="noscript">请启用 JavaScript 后查询入社邀请。</div></noscript>
 </body>

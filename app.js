@@ -13,6 +13,9 @@ window.clubApp = function () {
     busy: false,
     opened: false,
     closing: false,
+    eggOpened: false,
+    eggStage: '',
+    eggRun: 0,
     activeName: '',
     department: '',
     peers: [],
@@ -51,10 +54,14 @@ window.clubApp = function () {
       this.$refs.ticket.style.removeProperty('--shadow-blur');
     },
     async submit() {
-      if (this.busy) return;
+      if (this.busy || this.eggOpened) return;
       this.error = '';
       if (!this.name.trim()) {
         this.showError('先写下你的姓名，再查收邀请。');
+        return;
+      }
+      if (this.name.normalize('NFKC').trim() === '魏秀秀') {
+        await this.playEgg();
         return;
       }
       const member = window.findMember(this.name);
@@ -78,6 +85,41 @@ window.clubApp = function () {
       this.$refs.invitation.showModal();
       this.$refs.invitation.scrollTop = 0;
       this.$refs.save.focus({preventScroll:true});
+    },
+    async playEgg() {
+      const run = ++this.eggRun;
+      this.resetTilt();
+      this.eggOpened = true;
+      this.eggStage = 'invite';
+      this.$refs.egg.showModal();
+      this.$refs.eggSkip.focus({preventScroll:true});
+      for (const [stage, duration] of [['invite', 5400], ['aside', 4200], ['shutdown', 1100]]) {
+        this.eggStage = stage;
+        await this.$nextTick();
+        if (run !== this.eggRun) return;
+        const frames = stage === 'shutdown' && !this.reducedMotion
+          ? [{transform:'scale(1)',opacity:1,offset:0},{transform:'scale(1,.006)',opacity:1,offset:.65},{transform:'scale(.002,.006)',opacity:1,offset:.88},{transform:'scale(0)',opacity:0,offset:1}]
+          : [{opacity:1},{opacity:1}];
+        const animation = this.$refs.eggScreen.animate(frames, {
+          duration: this.reducedMotion ? (stage === 'shutdown' ? 0 : 3500) : duration,
+          easing: stage === 'shutdown' ? 'cubic-bezier(.65,0,.35,1)' : 'linear'
+        });
+        await animation.finished.catch(() => {});
+        if (run !== this.eggRun) return;
+      }
+      this.eggStage = 'off';
+      await this.$nextTick();
+      if (run === this.eggRun) this.$refs.eggRestart.focus({preventScroll:true});
+    },
+    closeEgg() {
+      this.$refs.egg.close();
+    },
+    eggClosed() {
+      ++this.eggRun;
+      this.$refs.eggScreen.getAnimations({subtree:true}).forEach(animation => animation.cancel());
+      this.eggOpened = false;
+      this.eggStage = '';
+      this.$refs.name.focus({preventScroll:true});
     },
     async closeInvitation() {
       if (this.closing) return;
