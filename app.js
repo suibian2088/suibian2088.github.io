@@ -2,130 +2,66 @@ window.findMember = function (name) {
   const normalized = name.normalize('NFKC').trim();
   return window.CLUB.members.find(member => member.name.normalize('NFKC').trim() === normalized);
 };
-
 window.clubApp = function () {
   return {
     club: window.CLUB.name,
-    name: '',
-    error: '',
-    focused: false,
-    pageHidden: document.hidden,
-    busy: false,
-    introActive: false,
-    searchStep: '',
-    searchCaption: '',
-    opened: false,
-    closing: false,
-    eggOpened: false,
-    eggStage: '',
-    eggRun: 0,
-    activeName: '',
-    department: '',
-    peers: [],
-    downloaded: false,
-    saving: false,
-    saveError: '',
+    themes: window.DEPARTMENTS,
+    departments: ['学习部','技术部','媒体部','办公室部','设计部'],
+    name: '', error: '', busy: false, opened: false, closing: false,
+    introActive: false, searchStep: '', searchCaption: '',
+    activeName: '', department: '', peers: [],
+    downloaded: false, saving: false, saveError: '',
+    eggOpened: false, eggStage: '', eggRun: 0,
+    get theme() { return this.themes[this.department] || this.themes['技术部']; },
+    get reducedMotion() { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; },
     init() {
       let welcomed = false;
-      try { welcomed = sessionStorage.getItem('it-welcome-v2') === 'seen'; } catch {}
+      try { welcomed = sessionStorage.getItem('it-editorial-welcome') === 'seen'; } catch {}
       this.introActive = !welcomed && !this.reducedMotion && Boolean(window.anime);
       this.$nextTick(() => {
-        if (this.introActive) {
-          this.$refs.welcome.showModal();
-          window.AssociationMotion.welcome(this);
-        }
+        if (this.introActive) { this.$refs.welcome.showModal(); window.AssociationMotion.welcome(this); }
       });
     },
     finishIntro() {
+      if (!this.introActive) return;
       window.AssociationMotion.stopIntro();
       this.introActive = false;
       this.$refs.welcome.close();
-      try { sessionStorage.setItem('it-welcome-v2', 'seen'); } catch {}
-      this.$nextTick(() => {
-        this.$refs.name.focus({preventScroll:true});
-        window.AssociationMotion.arrive();
-      });
+      try { sessionStorage.setItem('it-editorial-welcome', 'seen'); } catch {}
+      this.$nextTick(() => { this.$refs.name.focus({preventScroll:true}); window.AssociationMotion.arrive(); });
     },
+    showError(message) { this.error = message; this.$refs.name.focus({preventScroll:true}); },
     cancelSearch() {
       window.AssociationMotion.cancelSearch();
-      this.$refs.search.close();
-      this.busy = false;
+      this.$refs.search.close(); this.busy = false;
       this.$refs.name.focus({preventScroll:true});
-    },
-    get theme() {
-      return window.DEPARTMENTS[this.department] || window.DEPARTMENTS['技术部'];
-    },
-    get reducedMotion() {
-      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    },
-    showError(message) {
-      this.error = message;
-      this.$refs.name.focus();
-      if (!this.reducedMotion) {
-        this.$refs.inputRow.animate([{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(-2px)'},{transform:'translateX(0)'}], {duration:260,easing:'ease-out'});
-      }
-    },
-    tiltTicket(event) {
-      if (event.pointerType !== 'mouse' || this.reducedMotion || this.busy) return;
-      const rect = this.$refs.ticket.getBoundingClientRect();
-      const x = Math.max(-.5, Math.min(.5, (event.clientX - rect.left) / rect.width - .5));
-      const y = Math.max(-.5, Math.min(.5, (event.clientY - rect.top) / rect.height - .5));
-      this.$refs.ticket.style.setProperty('--tilt-x', `${-y * 5}deg`);
-      this.$refs.ticket.style.setProperty('--tilt-y', `${x * 9}deg`);
-      this.$refs.ticket.style.setProperty('--shadow-x', `${8 - x * 20}px`);
-      this.$refs.ticket.style.setProperty('--shadow-y', `${11 - y * 18}px`);
-      this.$refs.ticket.style.setProperty('--shadow-blur', `${32 + (Math.abs(x) + Math.abs(y)) * 10}px`);
-    },
-    resetTilt() {
-      this.$refs.ticket.style.removeProperty('--tilt-x');
-      this.$refs.ticket.style.removeProperty('--tilt-y');
-      this.$refs.ticket.style.removeProperty('--shadow-x');
-      this.$refs.ticket.style.removeProperty('--shadow-y');
-      this.$refs.ticket.style.removeProperty('--shadow-blur');
     },
     async submit() {
       if (this.busy || this.eggOpened || this.introActive) return;
       this.error = '';
-      if (!this.name.trim()) {
-        this.showError('先写下你的姓名，再查收邀请。');
-        return;
-      }
-      if (this.name.normalize('NFKC').trim() === '魏秀秀') {
-        await this.playEgg();
-        return;
-      }
+      if (!this.name.trim()) { this.showError('先写下你的姓名，再查收邀请。'); return; }
+      if (this.name.normalize('NFKC').trim() === '魏秀秀') { await this.playEgg(); return; }
       const member = window.findMember(this.name);
       this.busy = true;
-      this.resetTilt();
       await this.$nextTick();
       if (!this.reducedMotion && window.anime) {
-        this.searchStep = '学习部';
-        this.searchCaption = '翻开新的一页。';
-        this.$refs.search.showModal();
-        this.$refs.search.querySelector('button').focus({preventScroll:true});
+        this.searchStep = '学习部'; this.searchCaption = '从好奇开始。';
+        this.$refs.search.showModal(); this.$refs.search.querySelector('button').focus({preventScroll:true});
         if (!await window.AssociationMotion.lookup(this)) return;
-        this.$refs.search.close();
-        window.AssociationMotion.cancelSearch();
+        this.$refs.search.close(); window.AssociationMotion.cancelSearch();
       }
       this.busy = false;
-      if (!member) {
-        this.showError('暂时没有查到这个名字。请核对报名姓名，或联系协会负责人。');
-        return;
-      }
-      this.activeName = member.name;
-      this.department = member.department;
+      if (!member) { this.showError('暂时没有查到这个名字。请核对报名姓名，或联系协会负责人。'); return; }
+      this.activeName = member.name; this.department = member.department;
       this.peers = window.CLUB.members.filter(peer => peer.department === member.department && peer.name !== member.name);
-      this.downloaded = false;
-      this.saveError = '';
+      this.downloaded = false; this.saveError = '';
       await this.$nextTick();
-      this.opened = true;
-      this.$refs.invitation.showModal();
-      this.$refs.invitation.scrollTop = 0;
-      this.$refs.save.focus({preventScroll:true});
+      this.opened = true; this.$refs.invitation.showModal();
+      this.$refs.invitation.scrollTop = 0; this.$refs.save.focus({preventScroll:true});
+      window.AssociationMotion.result(this.reducedMotion);
     },
     async playEgg() {
       const run = ++this.eggRun;
-      this.resetTilt();
       this.eggOpened = true;
       this.eggStage = 'invite';
       this.$refs.egg.showModal();
@@ -161,16 +97,10 @@ window.clubApp = function () {
     async closeInvitation() {
       if (this.closing) return;
       this.closing = true;
-      if (!this.reducedMotion) {
-        await this.$refs.content.animate([{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:'translateY(10px) scale(.985)'}], {duration:280,easing:'ease-in'}).finished;
-      }
+      if (!this.reducedMotion) await this.$refs.content.animate([{opacity:1},{opacity:0}],{duration:180,easing:'ease-in'}).finished;
       this.$refs.invitation.close();
     },
-    closed() {
-      this.opened = false;
-      this.closing = false;
-      this.$refs.name.focus();
-    },
+    closed() { this.opened = false; this.closing = false; this.$refs.name.focus({preventScroll:true}); },
     async download() {
       if (this.saving) return;
       this.saving = true;
