@@ -10,10 +10,12 @@ window.clubApp = function () {
     name: '', error: '', busy: false, opened: false, closing: false,
     introActive: false, searchStep: '', searchCaption: '',
     activeName: '', department: '', peers: [],
-    downloaded: false, saving: false, saveError: '',
+    downloaded: false, saving: false, saveError: '', saveRun: 0,
+    passImage: '', passFilename: '',
     eggOpened: false, eggStage: '', eggRun: 0,
     get theme() { return this.themes[this.department] || this.themes['技术部']; },
     get reducedMotion() { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; },
+    get touchDevice() { return window.matchMedia('(pointer: coarse)').matches; },
     init() {
       let welcomed = false;
       try { welcomed = sessionStorage.getItem('it-devtool-welcome-v3') === 'seen'; } catch {}
@@ -41,8 +43,9 @@ window.clubApp = function () {
       this.error = '';
       if (!this.name.trim()) { this.showError('先写下你的姓名，再查收邀请。'); return; }
       if (this.name.normalize('NFKC').trim() === '魏秀秀') { await this.playEgg(); return; }
-      this.$refs.name.blur();
       const member = window.findMember(this.name);
+      if (!member) { this.showError('暂未查到，请核对姓名或联系协会负责人。'); return; }
+      this.$refs.name.blur();
       this.busy = true;
       await this.$nextTick();
       await window.AssociationMotion.keyboardReady();
@@ -55,10 +58,9 @@ window.clubApp = function () {
         this.$refs.search.close(); window.AssociationMotion.cancelSearch();
       }
       this.busy = false;
-      if (!member) { this.showError('暂时没有查到这个名字。请核对报名姓名，或联系协会负责人。'); return; }
       this.activeName = member.name; this.department = member.department;
       this.peers = window.CLUB.members.filter(peer => peer.department === member.department && peer.name !== member.name);
-      this.downloaded = false; this.saveError = '';
+      this.clearPassImage(); this.saveError = '';
       await this.$nextTick();
       this.opened = true; this.$refs.invitation.showModal();
       this.$refs.invitation.scrollTop = 0; this.$refs.save.focus({preventScroll:true});
@@ -101,27 +103,47 @@ window.clubApp = function () {
     async closeInvitation() {
       if (this.closing) return;
       this.closing = true;
+      this.clearPassImage();
       if (!this.reducedMotion) await this.$refs.content.animate([{opacity:1},{opacity:0}],{duration:180,easing:'ease-in'}).finished;
       this.$refs.invitation.close();
     },
     closed() { this.opened = false; this.closing = false; this.$refs.name.focus({preventScroll:true}); },
+    clearPassImage() {
+      ++this.saveRun; this.saving = false; this.downloaded = false;
+      if (this.passImage) URL.revokeObjectURL(this.passImage);
+      this.passImage = ''; this.passFilename = '';
+    },
+    presentPassImage() {
+      if (this.touchDevice) {
+        this.$refs.imagePreview.showModal();
+        this.$refs.imageClose.focus({preventScroll:true});
+      } else {
+        const link = document.createElement('a');
+        link.href = this.passImage; link.download = this.passFilename; link.click();
+        this.downloaded = true;
+      }
+    },
+    closePassImage() { this.$refs.imagePreview.close(); },
     async download() {
-      if (this.saving) return;
+      if (this.saving || this.closing) return;
+      if (this.passImage) { this.presentPassImage(); return; }
+      const run = ++this.saveRun;
+      const pass = {club:this.club, name:this.activeName, department:this.department, theme:this.theme};
       this.saving = true;
       this.saveError = '';
       try {
-        const blob = await window.createPassImage({club:this.club, name:this.activeName, department:this.department, theme:this.theme});
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${this.club}-${this.department}-${this.activeName}-入社通行证.png`;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        this.downloaded = true;
+        const blob = await window.createPassImage(pass);
+        if (run !== this.saveRun) return;
+        this.passImage = URL.createObjectURL(blob);
+        this.passFilename = `${pass.club}-${pass.department}-${pass.name}-入社通行证.png`;
+        await this.$nextTick();
+        await this.$refs.previewImage.decode();
+        if (run !== this.saveRun) return;
+        this.presentPassImage();
       } catch {
-        this.saveError = '图片未能生成，请重试。';
+        if (run === this.saveRun) { this.clearPassImage(); this.saveError = '图片未能生成，请重试。'; }
       } finally {
-        this.saving = false;
+        if (run === this.saveRun) this.saving = false;
       }
     }
   };
