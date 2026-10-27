@@ -3,19 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f7f8f2">
+  <meta name="theme-color" content="#f8f5ed">
   <meta name="description" content="输入姓名，查收属于你的 IT 实训协会入社邀请。下一段故事，我们一起写。">
   <title>查收你的入社邀请 · IT 实训协会</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261027">
+  <link rel="stylesheet" href="upgrade.css?v=20261027">
   <script src="members.js" defer></script>
   <script src="departments.js" defer></script>
   <script src="pass-image.js" defer></script>
-  <script src="app.js" defer></script>
+  <script src="vendor/anime.umd.min.js" defer></script>
+  <script src="motion.js?v=20261027" defer></script>
+  <script src="app.js?v=20261027" defer></script>
   <script src="vendor/alpine.min.js" defer></script>
 </head>
-<body @visibilitychange.document="pageHidden = document.hidden" x-data="clubApp()" :class="{ 'invitation-open': opened || eggOpened, 'is-editing': focused, 'is-unlocking': busy, 'motion-paused': pageHidden }">
+<body @visibilitychange.document="pageHidden = document.hidden" x-data="clubApp()" :class="{ 'invitation-open': opened || eggOpened || introActive || busy, 'is-editing': focused, 'is-unlocking': busy, 'motion-paused': pageHidden }">
   <svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="it-buddy" viewBox="0 0 360 300">
+      <ellipse cx="185" cy="261" rx="106" ry="10" fill="#dddccd"/>
+      <g class="buddy-i">
+        <path d="M104 203v36l-17 5m49-41v35l17 6" fill="none" stroke="#344d3b" stroke-width="7" stroke-linecap="round"/>
+        <rect x="92" y="121" width="55" height="91" rx="20" fill="#92ac83"/>
+        <circle class="buddy-head" cx="119" cy="85" r="30" fill="#a6bc95"/>
+        <g class="buddy-eyes" fill="#334936"><ellipse cx="110" cy="82" rx="2.7" ry="4"/><ellipse cx="128" cy="82" rx="2.7" ry="4"/></g>
+        <path d="M112 94q7 7 14 0" stroke="#334936" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <path d="M95 150q-30-3-29-31" fill="none" stroke="#344d3b" stroke-width="6" stroke-linecap="round" class="buddy-wave"/>
+        <path d="M145 153q21 14 37 0" fill="none" stroke="#344d3b" stroke-width="6" stroke-linecap="round"/>
+      </g>
+      <g class="buddy-t">
+        <path d="M218 207v32l-14 5m43-37v32l16 5" fill="none" stroke="#71523b" stroke-width="7" stroke-linecap="round"/>
+        <path d="M184 125h99a15 15 0 0 1 0 30h-31v49a18 18 0 0 1-36 0v-49h-32a15 15 0 0 1 0-30" fill="#e6bb8d"/>
+        <g class="buddy-eyes" fill="#5e4732"><ellipse cx="224" cy="140" rx="2.7" ry="4"/><ellipse cx="243" cy="140" rx="2.7" ry="4"/></g>
+        <path d="M228 150q6 5 12 0" stroke="#5e4732" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M265 153q31 0 37-21" fill="none" stroke="#71523b" stroke-width="6" stroke-linecap="round"/>
+      </g>
+      <path class="buddy-ground" d="M65 260h242" stroke="#9ba48d" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </symbol>
     <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 19 19 5M5 5h14v14"/></symbol>
     <symbol id="download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
     <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
@@ -23,15 +46,16 @@
     <symbol id="pixel" viewBox="0 0 120 120"><path d="M48 0h24v24h24v24h24v24H96v24H72v24H48V96H24V72H0V48h24V24h24z"/></symbol>
   </svg>
 
-  <div class="page-shell">
+  <div class="page-shell" :inert="introActive">
     <header class="site-header">
-      <a class="brand" href="./" aria-label="IT 实训协会首页"><span class="brand-mark" aria-hidden="true">&gt;_</span><span x-text="club">IT 实训协会</span></a>
+      <a class="brand" href="./" aria-label="IT 实训协会首页"><span class="brand-mark" aria-hidden="true">iT</span><span x-text="club">IT 实训协会</span></a>
       <div class="header-note"><span class="status-dot" aria-hidden="true"></span>新成员 · 入社邀请</div>
     </header>
 
     <main class="hero">
       <section class="intro" aria-labelledby="page-title">
-        <h1 id="page-title"><span class="hello">Hello,</span><span class="title-line">下一位<span class="highlight">创造者<span class="pixel-period">▪</span></span></span></h1>
+        <p class="hello-note">你好，新同学。</p>
+        <h1 id="page-title">很高兴，<br>终于等到你<span class="warm-period">。</span></h1>
 
         <form class="lookup" @submit.prevent="submit" novalidate :aria-busy="busy">
           <label for="member-name">报名姓名</label>
@@ -42,34 +66,51 @@
           </div>
           <div class="feedback-space" id="query-message" aria-live="polite" aria-atomic="true">
             <p class="error-message" x-show="error" x-text="error" x-cloak></p>
-            <div class="unlock-status" x-show="busy" x-cloak><span>找到你了！正在打开你的入社邀请…</span><span class="progress-track"><i x-ref="progress"></i></span></div>
+            <div class="unlock-status" x-show="busy" x-cloak><span>小伙伴正在帮你查收邀请…</span><span class="progress-track"><i x-ref="progress"></i></span></div>
           </div>
         </form>
 
         <details class="query-help"><summary>没找到自己的名字？</summary><p>请使用报名时的完整姓名。仍然查不到时，可以联系协会负责人核对名单。</p></details>
       </section>
 
-      <section class="invitation-art" aria-label="等待署名的新成员通行证">
-        <div class="art-grid" aria-hidden="true"></div>
-        <svg class="pixel-flower" aria-hidden="true"><use href="#pixel"/></svg>
-        <div class="ticket-stage" x-ref="ticket" @pointermove="tiltTicket($event)" @pointerleave="resetTilt">
-        <article class="preview-ticket">
-          <div class="ticket-header"><span x-text="club">IT 实训协会</span><svg class="icon" aria-hidden="true"><use href="#arrow"/></svg></div>
-          <div class="ticket-body">
-            <div class="ticket-word" aria-hidden="true">HELLO,<br>WORLD<span>_</span></div>
-            <p class="ticket-message">新世界的入口，<br>为你保留。</p>
-            <div class="ticket-identity"><span class="avatar-pixel" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="preview-identity"><span class="preview-name" x-text="name.trim() || '等待你的名字'">等待你的名字</span><span class="identity-line"></span></span></div>
-          </div>
-          <div class="ticket-perforation" aria-hidden="true"></div>
-          <div class="ticket-footer"><span>新成员通行证</span><span class="barcode" aria-hidden="true"></span></div>
-        </article>
+      <section class="invitation-art buddy-scene" aria-label="IT 小伙伴为你准备的新成员通行证">
+        <svg class="buddy-doodle" viewBox="0 0 420 340" aria-hidden="true"><path d="M44 138c-25-45 40-85 52-52s-35 69-63 40M345 65l13-10m-5 29 21-2M59 265c83-22 216-22 300 0"/></svg>
+        <svg class="hero-buddy" viewBox="0 0 360 300" aria-hidden="true"><use href="#it-buddy"/></svg>
+        <div class="ticket-stage welcome-ticket" x-ref="ticket" @pointermove="tiltTicket($event)" @pointerleave="resetTilt">
+          <article class="preview-ticket">
+            <div class="ticket-identity"><span class="ticket-mini-mark" aria-hidden="true">iT</span><span class="preview-identity"><span class="preview-name" x-text="name.trim() || '为你留了一份邀请'">为你留了一份邀请</span><span class="ticket-caption">新成员通行证</span></span><span class="barcode" aria-hidden="true"></span></div>
+          </article>
         </div>
-        <span class="art-corner" aria-hidden="true">+</span>
       </section>
     </main>
 
   </div>
 
+  <dialog class="welcome-dialog" x-ref="welcome" aria-labelledby="welcome-title" @cancel.prevent="finishIntro">
+    <div class="welcome-content"><p class="welcome-association" x-text="club">IT 实训协会</p><svg class="intro-buddy" viewBox="0 0 360 300" aria-hidden="true"><use href="#it-buddy"/></svg><h2 id="welcome-title">你好，新同学。</h2><p class="welcome-caption">很高兴，我们的故事从这里开始。</p></div>
+    <button class="welcome-skip" @click="finishIntro">进入查询 <svg class="icon" aria-hidden="true"><use href="#arrow"/></svg></button>
+  </dialog>
+  <dialog class="search-dialog" x-ref="search" :data-step="searchStep" aria-labelledby="search-title" @cancel.prevent="cancelSearch">
+    <div class="search-content">
+      <p class="hello-note">IT 小伙伴 · 正在查收</p><h2 id="search-title">让我们找找你的邀请。</h2>
+      <div class="search-art">
+        <svg viewBox="0 0 600 300" class="search-drawing" aria-hidden="true">
+          <g class="search-sheets" fill="#fffdf7" stroke="#b7c8d0" stroke-width="1.5"><rect x="168" y="49" width="268" height="186" rx="6" transform="rotate(5 300 142)"/><rect x="168" y="49" width="268" height="186" rx="6" transform="rotate(-4 300 142)"/></g>
+          <rect x="162" y="46" width="276" height="190" rx="6" fill="#fffdf7" stroke="#c8cbbc" stroke-width="1.5"/>
+          <path class="search-book-line" d="M193 79h51m-51 8h37" stroke="#c99c45" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path class="search-brackets" d="m202 120-17 21 17 21m196-42 17 21-17 21" stroke="#71946b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path class="search-frame" d="M147 77V31h45m216 0h45v46m0 128v46h-45m-216 0h-45v-46" stroke="#c48b7a" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path class="search-underline" d="M230 177q59-9 140-2" stroke="#9b82b5" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <path class="search-seam" d="M162 206h276" stroke="#c8cbbc" stroke-width="1" stroke-dasharray="3 4" fill="none"/>
+          <use class="search-companion" href="#it-buddy" x="443" y="77" width="145" height="121"/>
+        </svg>
+        <span class="search-name" x-text="name.trim()"></span>
+      </div>
+      <div class="department-process" aria-label="五个部门一起准备这份邀请"><template x-for="(dept, index) in ['学习部','技术部','媒体部','办公室部','设计部']" :key="dept"><div class="department-token" :class="{'is-active': searchStep === dept}" :style="{'--token-accent': window.DEPARTMENTS[dept].accent,'--token-ink':window.DEPARTMENTS[dept].ink}"><svg viewBox="0 0 120 120" aria-hidden="true" :class="{'is-solid':window.DEPARTMENTS[dept].solid}"><path :d="window.DEPARTMENTS[dept].path"/></svg><span x-text="dept"></span></div></template></div>
+      <p class="search-stage" aria-live="polite" x-text="searchCaption"></p>
+      <button class="search-cancel" @click="cancelSearch">返回修改姓名</button>
+    </div>
+  </dialog>
   <dialog x-ref="invitation" class="success-dialog" :class="{ 'is-closing': closing }" :style="{ '--department-accent': theme.accent, '--department-ink': theme.ink }" aria-labelledby="success-title" aria-describedby="success-description" @close="closed" @cancel.prevent="closeInvitation" @click="if ($event.target === $refs.invitation) closeInvitation()">
     <div class="celebration" :class="{ 'celebrate': opened }" aria-hidden="true"><template x-for="n in 24"><i :style="`--n:${n};--x:${(n * 37) % 100}%;--r:${n * 49}deg;--d:${(n % 7) * 35}ms`"></i></template></div>
     <section class="success-content" x-ref="content">

@@ -11,6 +11,9 @@ window.clubApp = function () {
     focused: false,
     pageHidden: document.hidden,
     busy: false,
+    introActive: false,
+    searchStep: '',
+    searchCaption: '',
     opened: false,
     closing: false,
     eggOpened: false,
@@ -22,6 +25,33 @@ window.clubApp = function () {
     downloaded: false,
     saving: false,
     saveError: '',
+    init() {
+      let welcomed = false;
+      try { welcomed = sessionStorage.getItem('it-welcome-v2') === 'seen'; } catch {}
+      this.introActive = !welcomed && !this.reducedMotion && Boolean(window.anime);
+      this.$nextTick(() => {
+        if (this.introActive) {
+          this.$refs.welcome.showModal();
+          window.AssociationMotion.welcome(this);
+        }
+      });
+    },
+    finishIntro() {
+      window.AssociationMotion.stopIntro();
+      this.introActive = false;
+      this.$refs.welcome.close();
+      try { sessionStorage.setItem('it-welcome-v2', 'seen'); } catch {}
+      this.$nextTick(() => {
+        this.$refs.name.focus({preventScroll:true});
+        window.AssociationMotion.arrive();
+      });
+    },
+    cancelSearch() {
+      window.AssociationMotion.cancelSearch();
+      this.$refs.search.close();
+      this.busy = false;
+      this.$refs.name.focus({preventScroll:true});
+    },
     get theme() {
       return window.DEPARTMENTS[this.department] || window.DEPARTMENTS['技术部'];
     },
@@ -54,7 +84,7 @@ window.clubApp = function () {
       this.$refs.ticket.style.removeProperty('--shadow-blur');
     },
     async submit() {
-      if (this.busy || this.eggOpened) return;
+      if (this.busy || this.eggOpened || this.introActive) return;
       this.error = '';
       if (!this.name.trim()) {
         this.showError('先写下你的姓名，再查收邀请。');
@@ -65,22 +95,29 @@ window.clubApp = function () {
         return;
       }
       const member = window.findMember(this.name);
+      this.busy = true;
+      this.resetTilt();
+      await this.$nextTick();
+      if (!this.reducedMotion && window.anime) {
+        this.searchStep = '学习部';
+        this.searchCaption = '翻开新的一页。';
+        this.$refs.search.showModal();
+        this.$refs.search.querySelector('button').focus({preventScroll:true});
+        if (!await window.AssociationMotion.lookup(this)) return;
+        this.$refs.search.close();
+        window.AssociationMotion.cancelSearch();
+      }
+      this.busy = false;
       if (!member) {
         this.showError('暂时没有查到这个名字。请核对报名姓名，或联系协会负责人。');
         return;
       }
-      this.busy = true;
-      this.resetTilt();
       this.activeName = member.name;
       this.department = member.department;
       this.peers = window.CLUB.members.filter(peer => peer.department === member.department && peer.name !== member.name);
       this.downloaded = false;
       this.saveError = '';
       await this.$nextTick();
-      if (!this.reducedMotion) {
-        await this.$refs.progress.animate([{transform:'scaleX(0)'},{transform:'scaleX(1)'}], {duration:1350,easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'}).finished;
-      }
-      this.busy = false;
       this.opened = true;
       this.$refs.invitation.showModal();
       this.$refs.invitation.scrollTop = 0;
