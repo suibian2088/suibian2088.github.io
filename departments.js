@@ -4,8 +4,8 @@ window.DEPARTMENTS = {
     path: 'M60 30C46 19 29 18 14 23v70c17-5 32-4 46 7 14-11 29-12 46-7V23c-15-5-32-4-46 7Zm0 0v70M28 42c7-1 13 0 19 4M28 58c7-1 13 0 19 4M73 46c6-4 12-5 19-4M73 62c6-4 12-5 19-4'
   },
   '技术部': {
-    accent: '#bed0b8', ink: '#3a674e', code: 'BUILD', solid: true,
-    path: 'M48 0h24v24h24v24h24v24H96v24H72v24H48V96H24V72H0V48h24V24h24z'
+    accent: '#bed0b8', ink: '#3a674e', code: 'BUILD',
+    path: 'M38 29 9 60l29 31M82 29l29 31-29 31M69 19 51 101'
   },
   '媒体部': {
     accent: '#e7baa8', ink: '#a34532', code: 'STORY',

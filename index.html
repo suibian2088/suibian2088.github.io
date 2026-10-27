@@ -3,67 +3,93 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f4f1e9">
-  <meta name="description" content="IT 实训协会新成员邀请。保持好奇，一起创造。输入姓名，查收入社邀请，认识同部门伙伴。">
-  <title>保持好奇，一起创造 · IT 实训协会</title>
+  <meta name="theme-color" content="#f1f6f3">
+  <meta name="description" content="IT 实训协会新成员邀请。输入姓名，查收入社邀请，连接一起创造的伙伴。">
+  <title>Hello，新同学 · IT 实训协会</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=20261027-r2">
+  <link rel="stylesheet" href="style.css?v=20261027-m3">
   <script src="members.js" defer></script>
-  <script src="departments.js?v=20261027-r2" defer></script>
+  <script src="departments.js?v=20261027-m3" defer></script>
   <script src="vendor/anime.umd.min.js" defer></script>
-  <script src="motion.js?v=20261027-r2" defer></script>
-  <script src="pass-image.js?v=20261027-r2" defer></script>
-  <script src="app.js?v=20261027-r2" defer></script>
+  <script src="motion.js?v=20261027-m3" defer></script>
+  <script src="pass-image.js?v=20261027-m3" defer></script>
+  <script src="app.js?v=20261027-m3" defer></script>
   <script src="vendor/alpine.min.js" defer></script>
 </head>
-<body x-data="clubApp()" :class="{'overlay-open':introActive || busy || opened || eggOpened}">
+<body x-data="clubApp()" data-experience="mobile-dev" :class="{'overlay-open':introActive || busy || opened || eggOpened}">
   <svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-    <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 19 19 5M5 5h14v14"/></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
     <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
     <symbol id="download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
     <symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
-    <symbol id="association-mark" viewBox="0 0 48 48"><path fill="currentColor" d="M3 4h13v40H3zm20 0h22v11H23zm6 15h11v25H29z"/></symbol>
+    <symbol id="file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 13h6M9 17h4"/></symbol>
+    <symbol id="association-mark" viewBox="0 0 120 80"><path d="m24 21-17 19 17 19M96 21l17 19-17 19M39 20v40M53 20h28M67 20v40"/></symbol>
   </svg>
   <div class="page-shell" :inert="introActive">
     <header class="site-header">
       <a class="brand" href="./" aria-label="IT 实训协会首页"><svg class="brand-symbol" aria-hidden="true"><use href="#association-mark"/></svg><span x-text="club">IT 实训协会</span></a>
-      <span class="header-note">新成员 · 入社邀请</span>
+      <span class="header-note"><i></i>新成员入口</span>
     </header>
-    <main>
-      <section class="editorial-hero" aria-labelledby="page-title">
-        <h1 id="page-title"><span class="headline-first">保持好奇。</span><span class="headline-second">一起<span>创造。</span></span></h1>
-        <p class="hero-intro">在这里，找到一起动手的伙伴。</p>
-        <div class="department-bands" aria-label="五个部门，共同创造"><template x-for="(dept,index) in departments" :key="dept"><div class="department-band" :style="{'--band-color':themes[dept].ink,'--band-index':index}"><span x-text="dept"></span><svg class="band-icon" viewBox="0 0 120 120" :class="{'solid':themes[dept].solid}" aria-hidden="true"><path :d="themes[dept].path"/></svg></div></template></div>
+    <main class="home-main">
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hello-line" aria-hidden="true"><span class="prompt">&gt;</span> Hello, world<span class="caret">_</span></div>
+        <h1 id="page-title">下一行，<br class="desktop-break">写上你。</h1>
+        <p class="hero-intro">你的名字，是我们故事的新一行。</p>
+        <div class="hero-bracket" aria-hidden="true">{<span>一起，把想法变成现实。</span>}</div>
       </section>
-      <form class="lookup" @submit.prevent="submit" novalidate :aria-busy="busy">
-        <div class="lookup-heading"><h2>你的邀请，在这里。</h2><label for="member-name">报名姓名</label></div>
-        <div class="input-row" x-ref="inputRow" :class="{'has-error':error}"><input id="member-name" x-ref="name" x-model="name" @input="error=''" type="text" name="name" maxlength="40" autocomplete="name" enterkeyhint="go" placeholder="请输入完整姓名" :readonly="busy" :aria-invalid="Boolean(error)" aria-describedby="query-message"><button class="submit-button" :disabled="busy" type="submit"><span x-text="busy ? '正在查收' : '查收邀请'">查收邀请</span><svg class="icon" aria-hidden="true"><use href="#arrow"/></svg></button></div>
-        <div class="feedback-space" id="query-message" aria-live="polite" aria-atomic="true"><p class="error-message" x-show="error" x-text="error" x-cloak></p></div>
-      </form>
-      <details class="query-help"><summary>没找到自己的名字？</summary><p>请核对报名时的完整姓名。仍然查不到时，请向报名时的协会负责人核对名单。</p></details>
+      <div class="query-area">
+        <form class="lookup workspace" @submit.prevent="submit" novalidate :aria-busy="busy">
+          <div class="workspace-toolbar"><span class="file-tab"><svg class="icon" aria-hidden="true"><use href="#file"/></svg>welcome.ts</span><span class="workspace-state">入社邀请</span></div>
+          <div class="editor-body">
+            <div class="code-row code-start"><span class="line-number" aria-hidden="true">01</span><code><span class="syntax">const</span> you <span class="punctuation">= {</span></code></div>
+            <div class="name-line"><span class="line-number" aria-hidden="true">02</span><div class="name-control"><label for="member-name">报名姓名 <span class="field-token" aria-hidden="true">name:</span></label><div class="input-row" :class="{'has-error':error}"><span class="quote" aria-hidden="true">“</span><input id="member-name" x-ref="name" x-model="name" @input="error=''" type="text" name="name" maxlength="40" autocomplete="name" enterkeyhint="go" placeholder="你的完整姓名" :readonly="busy" :aria-invalid="Boolean(error)" aria-describedby="query-message"><span class="quote closing-quote" aria-hidden="true">”</span></div></div></div>
+            <div class="code-row code-end"><span class="line-number" aria-hidden="true">03</span><code class="punctuation">};</code></div>
+            <div class="feedback-space" id="query-message" aria-live="polite" aria-atomic="true"><p class="error-message" x-show="error" x-text="error" x-cloak></p></div>
+            <button class="submit-button" :disabled="busy" type="submit"><span x-text="busy ? '正在查收' : '查收我的邀请'">查收我的邀请</span><svg class="icon" aria-hidden="true"><use href="#arrow"/></svg></button>
+          </div>
+          <div class="department-dock" aria-label="学习部、技术部、媒体部、办公室部、设计部"><template x-for="dept in departments" :key="dept"><div class="dock-module" :style="{'--module-ink':themes[dept].ink,'--module-accent':themes[dept].accent}"><svg class="module-icon" viewBox="0 0 120 120" :class="{'solid':themes[dept].solid}" aria-hidden="true"><path :d="themes[dept].path"/></svg><span x-text="dept"></span></div></template></div>
+        </form>
+        <details class="query-help"><summary><span aria-hidden="true">＋</span> 没找到自己的名字？</summary><p>请核对报名时的完整姓名。仍然查不到时，请向协会负责人核对名单。</p></details>
+      </div>
     </main>
-    <footer class="site-footer"><span>IT 实训协会</span><span>学习 · 技术 · 媒体 · 办公室 · 设计</span></footer>
+    <footer class="site-footer"><span>从 Hello 开始，一起创造。</span><svg aria-hidden="true"><use href="#association-mark"/></svg></footer>
   </div>
   <dialog class="welcome-dialog" x-ref="welcome" aria-labelledby="welcome-title" @cancel.prevent="finishIntro">
-    <div class="welcome-wordmark"><svg class="intro-monogram" viewBox="0 0 300 220" aria-hidden="true"><path class="intro-i" d="M38 20h48v180H38z"/><path class="intro-t" d="M115 20h148v43H115zM166 85h48v115h-48z"/><path class="intro-rule" d="M38 215h225"/></svg><h2 id="welcome-title" x-text="club">IT 实训协会</h2><p class="welcome-caption">保持好奇，一起创造。</p><div class="welcome-colors" aria-hidden="true"><template x-for="dept in departments" :key="dept"><i :style="{background:themes[dept].ink}"></i></template></div></div>
+    <div class="welcome-wordmark">
+      <svg class="intro-monogram" viewBox="0 0 120 80" aria-hidden="true"><path class="intro-left" d="m24 21-17 19 17 19"/><path class="intro-i" d="M39 20v40"/><path class="intro-t" d="M53 20h28M67 20v40"/><path class="intro-right" d="m96 21 17 19-17 19"/><path class="intro-cursor" d="M87 68h16"/></svg>
+      <p class="intro-code">hello, world<span>_</span></p><h2 id="welcome-title" x-ref="introTitle" tabindex="-1" x-text="club">IT 实训协会</h2><p class="welcome-caption">每一个新想法，都从相遇开始。</p>
+    </div>
     <button class="welcome-skip" @click="finishIntro">进入查询 <svg class="icon" aria-hidden="true"><use href="#arrow"/></svg></button>
   </dialog>
   <dialog class="search-dialog" x-ref="search" :data-step="searchStep" aria-labelledby="search-title" @cancel.prevent="cancelSearch">
     <div class="search-content">
-      <p class="search-kicker">查收入社邀请</p><h2 id="search-title" class="search-name" x-text="name.trim()"></h2>
-      <div class="search-composition" aria-label="五个部门共同组成邀请"><template x-for="(dept,index) in departments" :key="dept"><div class="department-token" :class="{'is-active':searchStep===dept}" :style="{'--token-color':themes[dept].ink,'--token-index':index}"><span class="token-name" x-text="dept"></span><span class="token-line" aria-hidden="true"></span><svg class="token-icon" viewBox="0 0 120 120" :class="{'solid':themes[dept].solid}" aria-hidden="true"><path :d="themes[dept].path"/></svg></div></template></div>
-      <p class="search-stage" aria-live="polite" x-text="searchCaption"></p><button class="search-cancel" @click="cancelSearch">返回修改姓名 <span aria-hidden="true">↶</span></button>
+      <div class="search-console workspace">
+        <div class="workspace-toolbar"><span class="file-tab"><svg class="icon" aria-hidden="true"><use href="#file"/></svg>welcome.ts</span><span class="workspace-state"><i class="status-dot"></i>正在查收</span></div>
+        <div class="search-body">
+          <p class="search-kicker">一份写给你的邀请</p><h2 id="search-title" class="search-name" x-text="name.trim()"></h2>
+          <div class="running-code" aria-hidden="true"><span class="code-line-marker"></span><div class="running-row"><span class="line-number">01</span><code class="running-line"><span class="syntax">const</span> you = <span class="string">new Member();</span></code></div><div class="running-row"><span class="line-number">02</span><code class="running-line"><span class="syntax">await</span> IT.<span class="function">connect</span>(you);</code></div><div class="running-row"><span class="line-number">03</span><code class="running-line"><span class="function">welcome</span>(you);<i class="code-caret"></i></code></div></div>
+          <div class="module-stage"><div class="module-track" aria-hidden="true"><span class="module-track-fill"></span><span class="module-packet"></span></div><div class="search-modules"><template x-for="dept in departments" :key="dept"><div class="search-module" :class="{'is-active':searchStep===dept}" :style="{'--module-ink':themes[dept].ink,'--module-accent':themes[dept].accent}"><span class="module-key"><svg class="module-icon" viewBox="0 0 120 120" :class="{'solid':themes[dept].solid}" aria-hidden="true"><path :d="themes[dept].path"/></svg></span><span x-text="dept"></span></div></template></div></div>
+          <p class="search-stage" aria-live="polite" x-text="searchCaption"></p>
+          <div class="search-progress" aria-hidden="true"><i></i></div>
+        </div>
+      </div>
+      <button class="search-cancel" @click="cancelSearch">返回修改姓名 <span aria-hidden="true">↶</span></button>
     </div>
   </dialog>
   <dialog class="success-dialog" x-ref="invitation" :style="{'--department-accent':theme.accent,'--department-ink':theme.ink}" aria-labelledby="success-title" @close="closed" @cancel.prevent="closeInvitation">
     <div class="success-content" x-ref="content">
-      <header class="result-header"><span x-text="club">IT 实训协会</span><button class="close-button" @click="closeInvitation" aria-label="关闭邀请，返回姓名查询">返回查询 <svg class="icon" aria-hidden="true"><use href="#close"/></svg></button></header>
-      <div class="result-grid"><div class="result-heading"><p>入社邀请 · 已查收</p><h2 id="success-title">恭喜<br><span>入社。</span></h2></div><div class="result-main">
-        <article class="member-pass" aria-label="个人入社通行证"><div class="pass-heading"><span x-text="club">IT 实训协会</span><svg class="pass-mark" aria-hidden="true"><use href="#association-mark"/></svg></div><div class="pass-person"><p>欢迎加入</p><div class="member-name" :class="{'long-name':activeName.length>6}" x-text="activeName"></div><span class="member-department" x-text="department"></span></div><div class="pass-bottom"><span>新成员通行证</span><span class="barcode" aria-hidden="true"></span></div></article>
-        <dl class="member-details"><div><dt>同部门伙伴</dt><dd><ul class="peer-list" x-show="peers.length"><template x-for="peer in peers" :key="peer.name"><li x-text="peer.name"></li></template></ul><span x-show="!peers.length">暂无其他同部门成员</span></dd></div></dl>
-        <div class="result-actions"><button class="save-button" x-ref="save" :disabled="saving" :aria-busy="saving" @click="download"><span x-text="saving ? '正在生成图片' : downloaded ? '再保存一份' : '保存入社通行证'">保存入社通行证</span><svg class="icon" aria-hidden="true"><use :href="downloaded?'#check':'#download'" href="#download"/></svg></button><button class="back-button" @click="closeInvitation">返回姓名查询 <span aria-hidden="true">↗</span></button></div><p class="save-error" x-show="saveError" x-text="saveError" role="alert" x-cloak></p>
+      <header class="result-header"><a class="brand" href="./"><svg class="brand-symbol" aria-hidden="true"><use href="#association-mark"/></svg><span x-text="club">IT 实训协会</span></a><button class="close-button" @click="closeInvitation" aria-label="关闭邀请，返回姓名查询"><svg class="icon" aria-hidden="true"><use href="#close"/></svg></button></header>
+      <div class="result-grid"><div class="result-heading"><p><svg class="icon" aria-hidden="true"><use href="#check"/></svg>邀请已查收</p><h2 id="success-title">恭喜，你入社了。</h2><span>很高兴，与你一起写下新的故事。</span></div><div class="result-main">
+        <article class="member-pass" aria-label="个人入社通行证">
+          <div class="pass-heading"><span x-text="club">IT 实训协会</span><svg class="pass-mark" aria-hidden="true"><use href="#association-mark"/></svg></div>
+          <div class="pass-person"><div><p>欢迎加入</p><div class="member-name" :class="{'long-name':activeName.length>6}" x-text="activeName"></div><span class="member-department" x-text="department"></span></div><svg class="pass-emblem module-icon" viewBox="0 0 120 120" :class="{'solid':theme.solid}" aria-hidden="true"><path :d="theme.path"/></svg></div>
+          <div class="pass-bottom"><span>新成员通行证 <span class="pass-slash" aria-hidden="true">/</span></span><span class="barcode" aria-hidden="true"></span></div>
+          <span class="pass-corner corner-a" aria-hidden="true"></span><span class="pass-corner corner-b" aria-hidden="true"></span>
+        </article>
+        <div class="result-actions"><button class="save-button" x-ref="save" :disabled="saving" :aria-busy="saving" @click="download"><span x-text="saving ? '正在生成图片' : downloaded ? '再保存一份' : '保存入社通行证'">保存入社通行证</span><svg class="icon" aria-hidden="true"><use :href="downloaded?'#check':'#download'" href="#download"/></svg></button><button class="back-button" @click="closeInvitation">返回姓名查询 <span aria-hidden="true">↶</span></button></div><p class="save-error" x-show="saveError" x-text="saveError" role="alert" x-cloak></p>
+        <dl class="member-details"><div><dt>同部门伙伴 <span x-text="peers.length"></span></dt><dd><ul class="peer-list" x-show="peers.length"><template x-for="peer in peers" :key="peer.name"><li x-text="peer.name"></li></template></ul><span x-show="!peers.length">暂无其他同部门成员</span></dd></div></dl>
       </div></div>
-      <footer class="result-footer"><span>保持好奇。</span><span>一起创造。</span></footer>
+      <footer class="result-footer"><span>下一行，我们一起写。</span><svg aria-hidden="true"><use href="#association-mark"/></svg></footer>
     </div>
   </dialog>
   <dialog class="egg-dialog" x-ref="egg" :data-stage="eggStage" aria-label="隐藏彩蛋" @cancel.prevent="closeEgg" @close="eggClosed"><div class="egg-screen" x-ref="eggScreen" x-show="eggStage!=='off'"><p x-text="club">IT 实训协会</p><div class="egg-copy" aria-live="polite" aria-atomic="true"><h2 class="egg-invite" x-show="eggStage==='invite'"><span>同学，</span><span>快来加入</span><span>IT实训协会</span></h2><h2 class="egg-aside" x-show="eggStage==='aside'||eggStage==='shutdown'"><span>这个</span><span>能正常使用的</span></h2></div></div><button class="egg-skip" x-ref="eggSkip" x-show="eggStage!=='off'&&eggStage!=='shutdown'" @click="closeEgg">跳过 ×</button><button class="egg-restart" x-ref="eggRestart" x-show="eggStage==='off'" @click="closeEgg">⏻<span>重新开机</span></button></dialog>

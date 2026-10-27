@@ -16,10 +16,10 @@ window.clubApp = function () {
     get reducedMotion() { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; },
     init() {
       let welcomed = false;
-      try { welcomed = sessionStorage.getItem('it-editorial-welcome') === 'seen'; } catch {}
+      try { welcomed = sessionStorage.getItem('it-devtool-welcome-v3') === 'seen'; } catch {}
       this.introActive = !welcomed && !this.reducedMotion && Boolean(window.anime);
       this.$nextTick(() => {
-        if (this.introActive) { this.$refs.welcome.showModal(); window.AssociationMotion.welcome(this); }
+        if (this.introActive) { this.$refs.welcome.showModal(); this.$refs.introTitle.focus({preventScroll:true}); window.AssociationMotion.welcome(this); }
       });
     },
     finishIntro() {
@@ -27,8 +27,8 @@ window.clubApp = function () {
       window.AssociationMotion.stopIntro();
       this.introActive = false;
       this.$refs.welcome.close();
-      try { sessionStorage.setItem('it-editorial-welcome', 'seen'); } catch {}
-      this.$nextTick(() => { this.$refs.name.focus({preventScroll:true}); window.AssociationMotion.arrive(); });
+      try { sessionStorage.setItem('it-devtool-welcome-v3', 'seen'); } catch {}
+      this.$nextTick(() => { window.AssociationMotion.arrive(); });
     },
     showError(message) { this.error = message; this.$refs.name.focus({preventScroll:true}); },
     cancelSearch() {
@@ -41,13 +41,17 @@ window.clubApp = function () {
       this.error = '';
       if (!this.name.trim()) { this.showError('先写下你的姓名，再查收邀请。'); return; }
       if (this.name.normalize('NFKC').trim() === '魏秀秀') { await this.playEgg(); return; }
+      this.$refs.name.blur();
       const member = window.findMember(this.name);
       this.busy = true;
       await this.$nextTick();
+      await window.AssociationMotion.keyboardReady();
       if (!this.reducedMotion && window.anime) {
-        this.searchStep = '学习部'; this.searchCaption = '从好奇开始。';
+        this.searchStep = '学习部'; this.searchCaption = '连接每一种好奇心。';
+        window.AssociationMotion.prepareSearch(document.querySelector('.lookup'));
         this.$refs.search.showModal(); this.$refs.search.querySelector('button').focus({preventScroll:true});
-        if (!await window.AssociationMotion.lookup(this)) return;
+        if (!await window.AssociationMotion.lookup(this,member)) return;
+        window.AssociationMotion.captureSearch();
         this.$refs.search.close(); window.AssociationMotion.cancelSearch();
       }
       this.busy = false;
